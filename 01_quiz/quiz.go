@@ -14,7 +14,10 @@ import (
 
 
 func load(path string) [][]string {
-    csvFile, _ := os.Open(path) 
+    csvFile, err := os.Open(path)
+    if(err != nil){
+        log.Fatal(err)
+    } 
     r := csv.NewReader(bufio.NewReader(csvFile))
     records, err := r.ReadAll()
     if(err != nil){
@@ -46,10 +49,11 @@ func reportResults(correctCnt int, totalRecords int){
 func main() {
     shuffleFlagPtr := flag.Bool("shuffle", false, "Provide this flag to shuffle the questions")
     timerDurationPtr := flag.Int("duration", 30, "Set duration of quiz game")
+    questionCsvPtr := flag.String("QA", "problems.csv", "Relative or absolute path to csv containing questions and answers in q1,a1\nq2,a2 format")
     flag.Parse()
 
     // 1) load csv and set cli args
-    records := load("problems.csv")
+    records := load(*questionCsvPtr)
 
     if (*shuffleFlagPtr){
         rand.Seed(time.Now().UnixNano())
@@ -76,8 +80,7 @@ func main() {
 
     // 2) game loop
     for _, rec := range records {
-        question := rec[0]
-        answer := rec[1]
+        question, answer := rec[0], rec[1]
         
         if (gameLoop(question, answer)){
             correctCnt++
