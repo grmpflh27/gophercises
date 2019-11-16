@@ -2,7 +2,10 @@ package main
 
 import (
     "fmt"
+    "flag"
     "log"
+    "math/rand"
+    "time"
     "os"
     "bufio"
     "strings"
@@ -37,11 +40,19 @@ func gameLoop(question string, correctAnswer string) bool {
 
 
 func main() {
-    fmt.Printf("This is a funky quiz game\n")
+    shuffleFlagPtr := flag.Bool("shuffle", false, "Provide this flag to shuffle the questions")
+    flag.Parse()
+
 
     // 1) load csv
     records := load("problems.csv")
 
+    if (*shuffleFlagPtr){
+        rand.Seed(time.Now().UnixNano())
+        rand.Shuffle(len(records), func(i, j int) { records[i], records[j] = records[j], records[i] })
+    }
+
+    fmt.Printf("This is a funky quiz game\n")
     var correctCnt int = 0
     // 2) game loop
     for _, rec := range records {
