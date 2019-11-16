@@ -18,7 +18,7 @@ func load(path string) [][]string {
     if(err != nil){
         log.Fatal(err)
     } 
-    r := csv.NewReader(bufio.NewReader(csvFile))
+    r := csv.NewReader(csvFile)
     records, err := r.ReadAll()
     if(err != nil){
         log.Fatal(err)
