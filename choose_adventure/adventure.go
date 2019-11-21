@@ -1,8 +1,7 @@
-package main
+package funkyadventure
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func loadStory(storyPath string) map[string]interface{} {
+func LoadStory(storyPath string) map[string]interface{} {
 	fp, err := os.Open(storyPath)
 	if err != nil {
 		log.Fatal("Could not open story json")
@@ -22,19 +21,13 @@ func loadStory(storyPath string) map[string]interface{} {
 	byteValue, _ := ioutil.ReadAll(fp)
 
 	// TODO: proper parsing
-
 	var result map[string]interface{}
 	json.Unmarshal(byteValue, &result)
 
 	return result
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CHOOSE YOUR OWN ADVENTURE!")
-	fmt.Println("Endpoint Hit: homePage")
-}
-
-func setupRouter(chapters map[string]interface{}) *mux.Router {
+func SetupRouter(chapters map[string]interface{}) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	tmpl := template.Must(template.ParseFiles("chapter_template.html"))
@@ -51,18 +44,6 @@ func setupRouter(chapters map[string]interface{}) *mux.Router {
 	})
 
 	return myRouter
-}
-
-func main() {
-	fmt.Println("Starting this adventure")
-	storyJSONPath := "gopher.json"
-
-	// loading story
-	chapters := loadStory(storyJSONPath)
-
-	// define routes and start webserver
-	router := setupRouter(chapters)
-	http.ListenAndServe(":10000", router)
 }
 
 type Chapter struct {
