@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>MY FUNKY ADVENTURE</title>
+    </head>
+    <body>
+        <h1>FUNKY ADVENTURE</h1>
+        
+        <h3>{{.title}}</h3>
+        
+        {{range .story}}<p>{{ . }}</p>{{end}}
+         
+        {{ if .options }}
+        <p><b>What do you want to do next???</b></p>
+        {{ end }}
+        <ul>
+            {{range .options}}<a href="{{ .arc }}"><li>{{ .text }}</li></a><br>{{end}}
+        </ul>
+    </body>
+</html>`

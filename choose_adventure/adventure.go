@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 
 	"github.com/gorilla/mux"
 )
@@ -20,8 +21,7 @@ func loadStory(storyPath string) map[string]interface{} {
 	defer fp.Close()
 	byteValue, _ := ioutil.ReadAll(fp)
 
-	// var chapterMap map[string]chapter
-	// json.Unmarshal(byteValue, &chapterMap)
+	// TODO: proper parsing
 
 	var result map[string]interface{}
 	json.Unmarshal(byteValue, &result)
@@ -34,40 +34,44 @@ func home(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-func handleRequests(chapters map[string]interface{}) {
+func setupRouter(chapters map[string]interface{}) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
-	for k, _ := range chapters {
-		fmt.Println(k)
-		myRouter.HandleFunc("/"+k, func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "!!!!")
+
+	tmpl := template.Must(template.ParseFiles("chapter_template.html"))
+	for k, v := range chapters {
+		curChapterName := k
+		curChapter := v
+		myRouter.HandleFunc("/"+curChapterName, func(w http.ResponseWriter, r *http.Request) {
+			tmpl.Execute(w, curChapter)
 		})
 	}
 
-	myRouter.HandleFunc("/", home)
-	http.ListenAndServe(":10000", myRouter)
+	myRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		tmpl.Execute(w, chapters["intro"])
+	})
+
+	return myRouter
 }
 
 func main() {
 	fmt.Println("Starting this adventure")
-
-	// 1) loading story
 	storyJSONPath := "gopher.json"
+
+	// loading story
 	chapters := loadStory(storyJSONPath)
 
-	// 2) generate html templates
-
-	// 3) define and start webserver
-
-	handleRequests(chapters)
+	// define routes and start webserver
+	router := setupRouter(chapters)
+	http.ListenAndServe(":10000", router)
 }
 
-// type Chapter struct {
-// 	title   string           `json:"title"`
-// 	story   []string         `json:"story"`
-// 	options []ChapterOptions `json:"options"`
-// }
+type Chapter struct {
+	Title   string           `json:"title"`
+	Story   []string         `json:"story"`
+	Options []ChapterOptions `json:"options"`
+}
 
-// type ChapterOptions struct {
-// 	text string `json:"text"`
-// 	arc  string `json:"arc"`
-// }
+type ChapterOptions struct {
+	Text string `json:"text"`
+	Arc  string `json:"arc"`
+}
