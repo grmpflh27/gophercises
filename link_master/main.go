@@ -6,13 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"golang.org/x/net/html"
 )
-
-var allLinkNodes []*html.Node
-var curText []string
 
 func main() {
 	htmlFile := flag.String("file", "ex1.html", "file you'd wish to parse")
@@ -30,37 +26,38 @@ func main() {
 		log.Fatal("Could not parse")
 	}
 
-	getAllLinkNodes(rootNode)
+	allLinkNodes := getAllLinkNodes(rootNode)
 	fmt.Printf("Found %v links\n", len(allLinkNodes))
 
-	getLinks()
+	getLinks(allLinkNodes)
 }
 
-func getAllLinkNodes(curNode *html.Node) {
+func getAllLinkNodes(curNode *html.Node) []*html.Node {
 
 	if isLink(curNode) {
-		allLinkNodes = append(allLinkNodes, curNode)
+		return []*html.Node{curNode}
 	}
 
+	var ret []*html.Node
 	for c := curNode.FirstChild; c != nil; c = c.NextSibling {
-		getAllLinkNodes(c)
+		ret = append(ret, getAllLinkNodes(c)...)
 	}
+
+	return ret
 }
 
 func isLink(n *html.Node) bool {
 	return n.Type == html.ElementNode && n.Data == "a"
 }
 
-func getLinks() {
+func getLinks(allLinkNodes []*html.Node) {
 	var links []Link
 	for _, node := range allLinkNodes {
 		href, err := getHref(node)
 		if err != nil {
 			log.Fatal("ERRRRR")
 		}
-		getAllText(node)
-		links = append(links, Link{href, strings.Join(curText, "")})
-		curText = curText[:0]
+		links = append(links, Link{href, getAllText(node)})
 	}
 
 	fmt.Printf("%+v\n", links)
@@ -75,14 +72,20 @@ func getHref(n *html.Node) (string, error) {
 	return "", errors.New("no dice")
 }
 
-func getAllText(n *html.Node) {
+func getAllText(n *html.Node) string {
 	if n.Type == html.TextNode {
-		curText = append(curText, n.Data)
+		return n.Data
+	}
+	if n.Type != html.ElementNode {
+		return ""
 	}
 
+	var ret string
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		getAllText(c)
+		ret += getAllText(c)
 	}
+
+	return ret
 }
 
 type Link struct {
